@@ -18,16 +18,35 @@ main = putStrLn $ unlines (runTestCases [
 ------ Monad definitions
 
 --- Identity Monad
-type M a = a
+-- type M a = a
+--
+-- unitM :: a -> M a
+-- unitM a = a
+--
+-- bindM :: M a -> (a -> M b) -> M b
+-- a `bindM` f = f a
+--
+-- showM :: M Value -> String
+-- showM a = showval a
+
+-- Error Monad
+data M a =
+  Success a
+  | Error String
 
 unitM :: a -> M a
-unitM a = a
+unitM a = Success a
+
+errorM :: String -> M a
+errorM a = Error a
 
 bindM :: M a -> (a -> M b) -> M b
-a `bindM` f = f a
+bindM (Success a) f = f a
+bindM (Error s) _ = Error s
 
 showM :: M Value -> String
-showM a = showval a
+showM (Success a) = "Success: " ++ showval a
+showM (Error s) = "Error: " ++ s
 
 ------ Functionality (doesn't cause major change due to changing Monad definitions)
 type Name = String
@@ -67,16 +86,20 @@ interp (App t1 t2) e = interp t1 e `bindM` (\f ->
                        )
 
 lookup' :: Name -> Environment -> M Value
-lookup' _ [] = unitM Wrong
+-- lookup' _ [] = unitM Wrong
+lookup' x [] = errorM ("Unbound variable: " ++ x) -- for Error Monad
 lookup' x ((n,v):r) = if x == n then unitM v else lookup' x r
 
 add :: Value -> Value -> M Value
 add (Num a) (Num b) = unitM (Num (a+b))
-add _ _ = unitM Wrong
+-- add _ _ = unitM Wrong
+add a b = errorM ("Cannot add incompatible values: "
+                  ++ showval a ++ " and " ++ showval b) -- for Error Monad
 
 apply :: Value -> Value -> M Value
 apply (Fun f) x = f x
-apply _ _ = unitM Wrong
+-- apply _ _ = unitM Wrong
+apply a _ = errorM ("Cannot apply nonfunction: " ++ showval a) -- for Error Monad
 
 test :: Term -> String
 test t = showM (interp t [])
