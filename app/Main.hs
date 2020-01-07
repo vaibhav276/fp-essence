@@ -18,35 +18,42 @@ main = putStrLn $ unlines (runTestCases [
 ------ Monad definitions
 
 --- Identity Monad
--- type M a = a
---
--- unitM :: a -> M a
--- unitM a = a
---
--- bindM :: M a -> (a -> M b) -> M b
--- a `bindM` f = f a
---
--- showM :: M Value -> String
--- showM a = showval a
+type I a = a
+
+unitI :: a -> I a
+unitI a = a
+
+bindI :: I a -> (a -> I b) -> I b
+a `bindI` f = f a
+
+showI :: I Value -> String
+showI a = showval a
 
 -- Error Monad
-data M a =
+data E a =
   Success a
   | Error String
 
-unitM :: a -> M a
-unitM a = Success a
+unitE :: a -> E a
+unitE a = Success a
 
-errorM :: String -> M a
-errorM a = Error a
+errorE :: String -> E a
+errorE a = Error a
 
-bindM :: M a -> (a -> M b) -> M b
-bindM (Success a) f = f a
-bindM (Error s) _ = Error s
+bindE :: E a -> (a -> E b) -> E b
+bindE (Success a) f = f a
+bindE (Error s) _ = Error s
 
-showM :: M Value -> String
-showM (Success a) = "Success: " ++ showval a
-showM (Error s) = "Error: " ++ s
+showE :: E Value -> String
+showE (Success a) = "Success: " ++ showval a
+showE (Error s) = "Error: " ++ s
+
+------ Aliases
+type M = E
+unitM = unitE
+errorM = errorE
+bindM = bindE
+showM = showE
 
 ------ Functionality (doesn't cause major change due to changing Monad definitions)
 type Name = String
